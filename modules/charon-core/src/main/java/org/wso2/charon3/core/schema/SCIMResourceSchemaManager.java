@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.wso2.charon3.core.config.SCIMCustomSchemaExtensionBuilder;
 import org.wso2.charon3.core.config.SCIMUserSchemaExtensionBuilder;
+import org.wso2.charon3.core.config.SCIMGroupSchemaExtensionBuilder;
 import org.wso2.charon3.core.exceptions.BadRequestException;
 import org.wso2.charon3.core.exceptions.CharonException;
 import org.wso2.charon3.core.exceptions.NotImplementedException;
@@ -129,6 +130,48 @@ public class SCIMResourceSchemaManager {
         return SCIMSchemaDefinitions.SCIM_USER_SCHEMA;
     }
 
+        /*
+     * return group resource schema
+     *
+     * @return
+     */
+    public SCIMResourceTypeSchema getGroupResourceSchema() {
+        AttributeSchema schemaExtension = SCIMGroupSchemaExtensionBuilder.getInstance().getExtensionSchema();
+        if (schemaExtension != null) {
+            return SCIMResourceTypeSchema.createSCIMResourceSchema(new ArrayList<String>(
+                  Arrays.asList(SCIMConstants.GROUP_CORE_SCHEMA_URI, schemaExtension.getURI())),
+                  SCIMSchemaDefinitions.ID, SCIMSchemaDefinitions.META,
+                  SCIMSchemaDefinitions.SCIMGroupSchemaDefinition.DISPLAY_NAME,
+                  SCIMSchemaDefinitions.SCIMGroupSchemaDefinition.MEMBERS,
+                  schemaExtension);
+        }
+        
+        return SCIMSchemaDefinitions.SCIM_GROUP_SCHEMA;
+    }
+
+    /*
+     * Return the SCIM Group Resource Schema
+     *
+     * @return SCIMResourceTypeSchema
+     */
+    public SCIMResourceTypeSchema getGroupResourceSchema(UserManager userManager)
+            throws BadRequestException, NotImplementedException, CharonException {
+
+        AttributeSchema customSchemaExtension = SCIMGroupSchemaExtensionBuilder.getInstance().getExtensionSchema();
+        if (customSchemaExtension != null) {
+            List<String> schemas = new ArrayList<>();
+            schemas.add(SCIMConstants.GROUP_CORE_SCHEMA_URI);
+            schemas.add(customSchemaExtension.getURI());
+            return SCIMResourceTypeSchema.createSCIMResourceSchema(
+                  schemas,
+                  SCIMSchemaDefinitions.ID, SCIMSchemaDefinitions.META,
+                  SCIMSchemaDefinitions.SCIMGroupSchemaDefinition.DISPLAY_NAME,
+                  SCIMSchemaDefinitions.SCIMGroupSchemaDefinition.MEMBERS,
+                  customSchemaExtension);
+        }
+        return SCIMSchemaDefinitions.SCIM_GROUP_SCHEMA;
+    }
+    
     /*
      * check whether the extension is enabled
      *
@@ -143,6 +186,20 @@ public class SCIMResourceSchemaManager {
         }
     }
 
+         /*
+     * check whether the group extension is enabled
+     *
+     * @return
+     */
+    public Boolean isGroupExtensionSet() {
+        AttributeSchema schemaExtension = SCIMGroupSchemaExtensionBuilder.getInstance().getExtensionSchema();
+        if (schemaExtension != null) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
     /*
      * return the extension name
      *
@@ -156,6 +213,19 @@ public class SCIMResourceSchemaManager {
         return schemaExtension.getName();
     }
 
+    /*
+     * return the group extension name
+     *
+     * @return
+     */
+    public String getGroupExtensionName() {
+        AttributeSchema schemaExtension = SCIMGroupSchemaExtensionBuilder.getInstance().getExtensionSchema();
+        if (schemaExtension == null) {
+            return null;
+        }
+        return schemaExtension.getName();
+    }
+    
     /*
      * return the extension name
      *
@@ -180,6 +250,19 @@ public class SCIMResourceSchemaManager {
     }
 
     /*
+     * return the group extension uri
+     *
+     * @return
+     */
+    public String getGroupExtensionURI() {
+        AttributeSchema schemaExtension = SCIMGroupSchemaExtensionBuilder.getInstance().getExtensionSchema();
+        if (schemaExtension == null) {
+            return null;
+        }
+        return schemaExtension.getURI();
+    }
+    
+    /*
      * return the extension's required property
      *
      * @return
@@ -193,6 +276,19 @@ public class SCIMResourceSchemaManager {
     }
 
     /*
+     * return the group extension's required property
+     *
+     * @return
+     */
+    public boolean getGroupExtensionRequired() {
+        AttributeSchema schemaExtension = SCIMGroupSchemaExtensionBuilder.getInstance().getExtensionSchema();
+        if (schemaExtension == null) {
+            return false;
+        }
+        return schemaExtension.getRequired();
+    }
+    
+    /*
      * return service provider config resource schema
      *
      * @return
@@ -200,16 +296,7 @@ public class SCIMResourceSchemaManager {
     public SCIMResourceTypeSchema getServiceProviderConfigResourceSchema() {
         return SCIMSchemaDefinitions.SCIM_SERVICE_PROVIDER_CONFIG_SCHEMA;
     }
-
-    /*
-     * return group resource schema
-     *
-     * @return
-     */
-    public SCIMResourceTypeSchema getGroupResourceSchema() {
-        return SCIMSchemaDefinitions.SCIM_GROUP_SCHEMA;
-    }
-
+    
     public SCIMResourceTypeSchema getRoleResourceSchema() {
 
         return SCIMSchemaDefinitions.SCIM_ROLE_SCHEMA;

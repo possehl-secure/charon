@@ -25,6 +25,7 @@ import org.wso2.charon3.core.attributes.Attribute;
 import org.wso2.charon3.core.attributes.ComplexAttribute;
 import org.wso2.charon3.core.attributes.SimpleAttribute;
 import org.wso2.charon3.core.config.SCIMCustomSchemaExtensionBuilder;
+import org.wso2.charon3.core.config.SCIMGroupSchemaExtensionBuilder;
 import org.wso2.charon3.core.encoder.JSONEncoder;
 import org.wso2.charon3.core.exceptions.BadRequestException;
 import org.wso2.charon3.core.exceptions.CharonException;
@@ -49,6 +50,7 @@ import static org.wso2.charon3.core.schema.SCIMConstants.EnterpriseUserSchemaCon
 import static org.wso2.charon3.core.schema.SCIMConstants.ResourceTypeSchemaConstants.USER_ACCOUNT;
 import static org.wso2.charon3.core.schema.SCIMConstants.USER;
 import static org.wso2.charon3.core.schema.SCIMConstants.USER_CORE_SCHEMA_URI;
+import static org.wso2.charon3.core.schema.SCIMConstants.GROUP_CORE_SCHEMA_URI;
 
 /**
  * The schema resource enables a service
@@ -84,6 +86,9 @@ public class SchemaResourceManager extends AbstractResourceManager {
             List<Attribute> userCustomSchemaAttributes = userManager.getCustomUserSchemaAttributes();
             String customUserSchemaURI = SCIMCustomSchemaExtensionBuilder.getInstance().getURI();
 
+            List<Attribute> groupSchemaAttributes = userManager.getGroupSchema();
+            String customGroupSchemaURI = SCIMGroupSchemaExtensionBuilder.getInstance().getExtensionSchema().getURI();
+            
             Map<String, List<Attribute>> schemas = new HashMap<>();
             // Below code blocks handles the /Schemas/ api requests.
             if (StringUtils.isBlank(id)) {
@@ -92,6 +97,10 @@ public class SchemaResourceManager extends AbstractResourceManager {
                 schemas.put(ENTERPRISE_USER_SCHEMA_URI, userEnterpriseSchemaAttributes);
                 if (StringUtils.isNotBlank(customUserSchemaURI)) {
                     schemas.put(customUserSchemaURI, userCustomSchemaAttributes);
+                }
+                schemas.put(GROUP_CORE_SCHEMA_URI, groupSchemaAttributes);
+                if (StringUtils.isNotBlank(customGroupSchemaURI)) {
+                   schemas.put(customGroupSchemaURI, groupSchemaAttributes);
                 }
                 return buildSchemasResponse(schemas);
             }
@@ -105,6 +114,10 @@ public class SchemaResourceManager extends AbstractResourceManager {
                 schemas.put(ENTERPRISE_USER_SCHEMA_URI, userEnterpriseSchemaAttributes);
             } else if (StringUtils.isNotBlank(customUserSchemaURI) && customUserSchemaURI.equalsIgnoreCase(id)) {
                 schemas.put(customUserSchemaURI, userCustomSchemaAttributes);
+            } else if (GROUP_CORE_SCHEMA_URI.equalsIgnoreCase(id)) {
+                schemas.put(id, groupSchemaAttributes);
+            } else if (StringUtils.isNotBlank(customGroupSchemaURI) && customGroupSchemaURI.equalsIgnoreCase(id)) {
+                schemas.put(customGroupSchemaURI, groupSchemaAttributes);
             } else {
                 // https://tools.ietf.org/html/rfc7643#section-8.7
                 throw new NotImplementedException("only user, enterprise and custom schema are supported");
