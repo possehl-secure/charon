@@ -531,6 +531,21 @@ public class JSONEncoder {
                 SCIMConstants.ResourceTypeSchemaConstants.GROUP);
         groupResourceTypeObject.put(
                 SCIMConstants.ResourceTypeSchemaConstants.SCHEMA, SCIMConstants.GROUP_CORE_SCHEMA_URI);
+        
+        if (SCIMResourceSchemaManager.getInstance().isGroupExtensionSet()) {
+            JSONArray schemaExtensions = new JSONArray();
+            JSONObject extensionSchemaObject = new JSONObject();
+            extensionSchemaObject.put(
+                    SCIMConstants.ResourceTypeSchemaConstants.SCHEMA_EXTENSIONS_SCHEMA,
+                    SCIMResourceSchemaManager.getInstance().getGroupExtensionURI());
+            extensionSchemaObject.put(
+                    SCIMConstants.ResourceTypeSchemaConstants.SCHEMA_EXTENSIONS_REQUIRED,
+                    SCIMResourceSchemaManager.getInstance().getGroupExtensionRequired());
+            schemaExtensions.put(extensionSchemaObject);
+            groupResourceTypeObject.put(
+                    SCIMConstants.ResourceTypeSchemaConstants.SCHEMA_EXTENSIONS, schemaExtensions);       
+        }
+                
         return groupResourceTypeObject.toString();
     }
 
