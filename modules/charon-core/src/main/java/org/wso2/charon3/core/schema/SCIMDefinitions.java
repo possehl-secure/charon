@@ -1,4 +1,6 @@
 /*
+ * (c) Copyright 2022. TWINSEC GmbH, All Rights Reserved.
+ *
  * Copyright (c) 2016, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,36 +25,176 @@ public class SCIMDefinitions {
     /**
      * data types that an attribute can take, according to the SCIM spec.
      */
+  
     public static enum DataType {
-        STRING, BOOLEAN, DECIMAL, INTEGER, DATE_TIME, BINARY, REFERENCE, COMPLEX
+      
+        STRING("string"),
+        DECIMAL("decimal"),
+        BOOLEAN("boolean"),
+        INTEGER("integer"),
+        DATE_TIME("dateTime"),
+        BINARY("binary"),
+        REFERENCE("reference"),
+        COMPLEX("complex");
+               
+        private String value;
+              
+        private DataType(final String value) {
+            this.value = value;
+        }
+               
+        @Override
+        public String toString() {
+            return this.value;
+        }
+        
+        public static DataType getEnum(final String val) {
+      
+            for (final DataType v : values()) {
+                if (v.value.equalsIgnoreCase(val)) {
+                    return v;
+                }
+            }
+            
+            throw new IllegalArgumentException();
+        }
+        
     }
-
+            
     /**
      * values that an attributes' mutability attribute can take.
      */
     public static enum Mutability {
-        READ_WRITE, READ_ONLY, IMMUTABLE, WRITE_ONLY
+        
+        READ_ONLY("readOnly"),
+        READ_WRITE("readWrite"),
+        IMMUTABLE("immutable"),
+        WRITE_ONLY("writeOnly");
+               
+        private String value;
+              
+        private Mutability(final String value) {
+            this.value = value;
+        }
+               
+        @Override
+        public String toString() {
+            return this.value;
+        }
+        
+        public static Mutability getEnum(final String val) {
+      
+            for (final Mutability v : values()) {
+                if (v.value.equalsIgnoreCase(val)) {
+                    return v;
+                }
+            }
+            
+            throw new IllegalArgumentException();
+        }
+        
     }
 
     /**
      * values that an attributes' returned attribute can take.
      */
     public static enum Returned {
-        ALWAYS, NEVER, DEFAULT, REQUEST
+        
+        ALWAYS("always"),
+        NEVER("never"),
+        DEFAULT("default"),
+        REQUEST("request");
+               
+        private String value;
+              
+        private Returned(final String value) {
+            this.value = value;
+        }
+               
+        @Override
+        public String toString() {
+            return this.value;
+        }
+        
+        public static Returned getEnum(final String val) {
+      
+            for (final Returned v : values()) {
+                if (v.value.equalsIgnoreCase(val)) {
+                    return v;
+                }
+            }
+            
+            throw new IllegalArgumentException();
+        }
+        
     }
 
     /**
      * values that an attributes' uniqueness attribute can take.
      */
     public static enum Uniqueness {
-        NONE, SERVER, GLOBAL
+        
+        NONE("none"),
+        SERVER("server"),
+        GLOBAL("global");
+               
+        private String value;
+              
+        private Uniqueness(final String value) {
+            this.value = value;
+        }
+               
+        @Override
+        public String toString() {
+            return this.value;
+        }
+        
+        public static Uniqueness getEnum(final String val) {
+      
+            for (final Uniqueness v : values()) {
+                if (v.value.equalsIgnoreCase(val)) {
+                    return v;
+                }
+            }
+            
+            throw new IllegalArgumentException();
+        }
+        
     }
 
     /**
      * SCIM resource types that a referenceType attribute that may be referenced.
      */
     public static enum ReferenceType {
-        USER, GROUP, EXTERNAL, URI, ROLE
+        
+        USER("User"),
+        GROUP("Group"),
+        ROLE("Role"),
+        EXTERNAL("external"),
+        URI("uri");
+               
+        private String value;
+              
+        private ReferenceType(final String value) {
+            this.value = value;
+        }
+               
+        @Override
+        public String toString() {
+            return this.value;
+        }
+        
+        public static ReferenceType getEnum(final String val) {
+      
+            for (final ReferenceType v : values()) {
+                if (v.value.equalsIgnoreCase(val)) {
+                    return v;
+                }
+            }
+            
+            throw new IllegalArgumentException();
+        }
+        
     }
 
 }
