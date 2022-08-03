@@ -726,7 +726,7 @@ public class GroupResourceManager extends AbstractResourceManager {
 
         try {
             Map<String, List<PatchOperation>> patchOperations = new HashMap<>();
-
+            
             patchOperations.put(SCIMConstants.OperationalConstants.ADD, new ArrayList<>());
             patchOperations.put(SCIMConstants.OperationalConstants.REMOVE, new ArrayList<>());
             patchOperations.put(SCIMConstants.OperationalConstants.REPLACE, new ArrayList<>());
@@ -944,8 +944,10 @@ public class GroupResourceManager extends AbstractResourceManager {
             Map<String, String> member = new HashMap<>();
             member.put(SCIMConstants.CommonSchemaConstants.VALUE, ((SimpleAttribute)
                     (subAttributesList.get(SCIMConstants.CommonSchemaConstants.VALUE))).getStringValue());
-            member.put(SCIMConstants.CommonSchemaConstants.DISPLAY, ((SimpleAttribute)
+            if (subAttributesList.containsKey(SCIMConstants.CommonSchemaConstants.DISPLAY)) {
+                member.put(SCIMConstants.CommonSchemaConstants.DISPLAY, ((SimpleAttribute)
                     (subAttributesList.get(SCIMConstants.CommonSchemaConstants.DISPLAY))).getStringValue());
+            }
             memberList.add(member);
         }
         return memberList;
