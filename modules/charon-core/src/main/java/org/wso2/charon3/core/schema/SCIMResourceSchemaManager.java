@@ -98,9 +98,7 @@ public class SCIMResourceSchemaManager {
             schemas.add(enterpriseSchemaExtension.getURI());
             if (customSchemaExtension != null) {
                 schemas.add(customSchemaExtension.getURI());
-            } else {
-                log.warn("Could not find Custom schema.");
-            }
+            } 
             return SCIMResourceTypeSchema.createSCIMResourceSchema(
                     schemas,
                     SCIMSchemaDefinitions.ID, SCIMSchemaDefinitions.EXTERNAL_ID, SCIMSchemaDefinitions.META,
