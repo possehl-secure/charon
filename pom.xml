@@ -33,9 +33,9 @@
     <url>http://wso2.com</url>
 
     <scm>
-        <connection>scm:git:https://github.com/wso2/charon</connection>
-        <developerConnection>scm:git:https://github.com/wso2/charon</developerConnection>
-        <url>https://github.com/wso2/charon</url>
+        <connection>scm:git:https://github.com/twinsec-de/charon</connection>
+        <developerConnection>scm:git:https://github.com/twinsec-de/charon</developerConnection>
+        <url>https://github.com/twinsec-de/charon</url>
         <tag>HEAD</tag>
     </scm>
 
@@ -170,7 +170,7 @@
                 <updatePolicy>daily</updatePolicy>
                 <checksumPolicy>ignore</checksumPolicy>
             </releases>
-        </repository>      
+        </repository>
         <!--<repository>
             <id>wso2.snapshots</id>
             <name>WSO2 Snapshot Repository</name>
@@ -253,6 +253,14 @@
                     <autoVersionSubmodules>false</autoVersionSubmodules>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>buildnumber-maven-plugin</artifactId>

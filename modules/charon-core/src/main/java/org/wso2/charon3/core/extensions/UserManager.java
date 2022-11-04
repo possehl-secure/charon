@@ -273,4 +273,14 @@ public interface UserManager {
 
         return null;
     }
+
+    default List<Attribute> getGroupSchema() throws CharonException, NotImplementedException, BadRequestException {
+
+        throw new NotImplementedException();
+    }
+
+    default List<Attribute> getCustomGroupSchemaAttributes() throws CharonException, NotImplementedException, BadRequestException {
+
+        throw new NotImplementedException();
+    }
  }

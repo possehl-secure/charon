@@ -15,16 +15,16 @@
  */
 package org.wso2.charon3.core.protocol.endpoints;
 
+import java.util.ArrayList;
 import org.apache.commons.lang.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.wso2.charon3.core.attributes.Attribute;
-import org.wso2.charon3.core.attributes.ComplexAttribute;
-import org.wso2.charon3.core.attributes.SimpleAttribute;
 import org.wso2.charon3.core.config.SCIMCustomSchemaExtensionBuilder;
+import org.wso2.charon3.core.schema.SCIMResourceTypeSchema;
+import org.wso2.charon3.core.config.SCIMGroupSchemaExtensionBuilder;
 import org.wso2.charon3.core.encoder.JSONEncoder;
 import org.wso2.charon3.core.exceptions.BadRequestException;
 import org.wso2.charon3.core.exceptions.CharonException;
@@ -38,17 +38,24 @@ import org.wso2.charon3.core.schema.SCIMConstants;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.wso2.charon3.core.config.SCIMGroupSchemaExtensionBuilder;
+import org.wso2.charon3.core.schema.AttributeSchema;
 
-import static org.wso2.charon3.core.schema.SCIMConstants.CORE;
-import static org.wso2.charon3.core.schema.SCIMConstants.CORE_SCHEMA_URI;
 import static org.wso2.charon3.core.schema.SCIMConstants.CUSTOM_USER;
-import static org.wso2.charon3.core.schema.SCIMConstants.CustomUserSchemaConstants.CUSTOM_USER_DESC;
+import static org.wso2.charon3.core.schema.SCIMConstants.CommonSchemaConstants.LOCATION;
+import static org.wso2.charon3.core.schema.SCIMConstants.CommonSchemaConstants.META;
+import static org.wso2.charon3.core.schema.SCIMConstants.CommonSchemaConstants.RESOURCE_TYPE;
 import static org.wso2.charon3.core.schema.SCIMConstants.ENTERPRISE_USER;
 import static org.wso2.charon3.core.schema.SCIMConstants.ENTERPRISE_USER_SCHEMA_URI;
-import static org.wso2.charon3.core.schema.SCIMConstants.EnterpriseUserSchemaConstants.ENTERPRISE_USER_DESC;
-import static org.wso2.charon3.core.schema.SCIMConstants.ResourceTypeSchemaConstants.USER_ACCOUNT;
+import static org.wso2.charon3.core.schema.SCIMConstants.GROUP;
+import static org.wso2.charon3.core.schema.SCIMConstants.GROUP_CORE_SCHEMA_URI;
+import org.wso2.charon3.core.schema.SCIMConstants.ListedResourceSchemaConstants;
+import static org.wso2.charon3.core.schema.SCIMConstants.OperationalConstants.ATTRIBUTES;
 import static org.wso2.charon3.core.schema.SCIMConstants.USER;
 import static org.wso2.charon3.core.schema.SCIMConstants.USER_CORE_SCHEMA_URI;
+import org.wso2.charon3.core.schema.SCIMDefinitions;
+import org.wso2.charon3.core.schema.SCIMResourceSchemaManager;
+
 
 /**
  * The schema resource enables a service
@@ -57,10 +64,11 @@ import static org.wso2.charon3.core.schema.SCIMConstants.USER_CORE_SCHEMA_URI;
  */
 public class SchemaResourceManager extends AbstractResourceManager {
 
-    private static final Logger log = LoggerFactory.getLogger(SchemaResourceManager.class);
+    private static final Logger logger = LoggerFactory.getLogger(SchemaResourceManager.class);
 
-    private static final String ATTRIBUTES = "attributes";
-
+    private String customUserSchemaURI = null;
+    private String customGroupSchemaURI = null;
+    
     public SchemaResourceManager() {
 
     }
@@ -78,40 +86,45 @@ public class SchemaResourceManager extends AbstractResourceManager {
     public SCIMResponse get(String id, UserManager userManager, String attributes, String excludeAttributes) {
 
         try {
-            List<Attribute> coreSchemaAttributes = userManager.getCoreSchema();
-            List<Attribute> userSchemaAttributes = userManager.getUserSchema();
-            List<Attribute> userEnterpriseSchemaAttributes = userManager.getEnterpriseUserSchema();
-            List<Attribute> userCustomSchemaAttributes = userManager.getCustomUserSchemaAttributes();
-            String customUserSchemaURI = SCIMCustomSchemaExtensionBuilder.getInstance().getURI();
+            SCIMResourceTypeSchema userSchemaAttributes = SCIMResourceSchemaManager.getInstance().getUserResourceSchema();
+            customUserSchemaURI = SCIMCustomSchemaExtensionBuilder.getInstance().getURI();
 
-            Map<String, List<Attribute>> schemas = new HashMap<>();
+            SCIMResourceTypeSchema groupSchemaAttributes = SCIMResourceSchemaManager.getInstance().getGroupResourceSchema();
+            customGroupSchemaURI = SCIMGroupSchemaExtensionBuilder.getInstance().getExtensionSchema().getURI();
+
+            Map<String, SCIMResourceTypeSchema> schemas = new HashMap<>();
             // Below code blocks handles the /Schemas/ api requests.
             if (StringUtils.isBlank(id)) {
-                schemas.put(CORE_SCHEMA_URI, coreSchemaAttributes);
                 schemas.put(USER_CORE_SCHEMA_URI, userSchemaAttributes);
-                schemas.put(ENTERPRISE_USER_SCHEMA_URI, userEnterpriseSchemaAttributes);
+                schemas.put(ENTERPRISE_USER_SCHEMA_URI, userSchemaAttributes);
                 if (StringUtils.isNotBlank(customUserSchemaURI)) {
-                    schemas.put(customUserSchemaURI, userCustomSchemaAttributes);
+                    schemas.put(customUserSchemaURI, userSchemaAttributes);
+                }
+                schemas.put(GROUP_CORE_SCHEMA_URI, groupSchemaAttributes);
+                if (StringUtils.isNotBlank(customGroupSchemaURI)) {
+                   schemas.put(customGroupSchemaURI, groupSchemaAttributes);
                 }
                 return buildSchemasResponse(schemas);
             }
 
             // Below code blocks handles the /Schemas/{id} api requests.
-            if (CORE_SCHEMA_URI.equalsIgnoreCase(id)) {
-                schemas.put(CORE_SCHEMA_URI, coreSchemaAttributes);
-            } else if (USER_CORE_SCHEMA_URI.equalsIgnoreCase(id)) {
-                schemas.put(USER_CORE_SCHEMA_URI, userSchemaAttributes);
+            if (USER_CORE_SCHEMA_URI.equalsIgnoreCase(id)) {
+                schemas.put(id, userSchemaAttributes);
             } else if (ENTERPRISE_USER_SCHEMA_URI.equalsIgnoreCase(id)) {
-                schemas.put(ENTERPRISE_USER_SCHEMA_URI, userEnterpriseSchemaAttributes);
+                schemas.put(ENTERPRISE_USER_SCHEMA_URI, userSchemaAttributes);
             } else if (StringUtils.isNotBlank(customUserSchemaURI) && customUserSchemaURI.equalsIgnoreCase(id)) {
-                schemas.put(customUserSchemaURI, userCustomSchemaAttributes);
+                schemas.put(customUserSchemaURI, userSchemaAttributes);
+            } else if (GROUP_CORE_SCHEMA_URI.equalsIgnoreCase(id)) {
+                schemas.put(id, groupSchemaAttributes);
+            } else if (StringUtils.isNotBlank(customGroupSchemaURI) && customGroupSchemaURI.equalsIgnoreCase(id)) {
+                schemas.put(customGroupSchemaURI, groupSchemaAttributes);
             } else {
                 // https://tools.ietf.org/html/rfc7643#section-8.7
                 throw new NotImplementedException("only user, enterprise and custom schema are supported");
             }
 
             return buildSchemasResponse(schemas);
-        } catch (BadRequestException | CharonException | NotFoundException | NotImplementedException e) {
+        } catch (CharonException | NotFoundException | NotImplementedException e) {
             // TODO: 11/7/19 Seperate out user errors & server errors
             return AbstractResourceManager.encodeSCIMException(e);
         }
@@ -125,14 +138,14 @@ public class SchemaResourceManager extends AbstractResourceManager {
      * @throws CharonException
      * @throws NotFoundException
      */
-    private SCIMResponse buildSchemasResponse(Map<String, List<Attribute>> schemas) throws CharonException,
-            NotFoundException {
+    private SCIMResponse buildSchemasResponse(Map<String, SCIMResourceTypeSchema> schemas) 
+            throws CharonException, NotFoundException {
 
         String schemaResponseBody = buildSchemasResponseBody(schemas).toString();
         Map<String, String> responseHeaders = getResponseHeaders();
         return new SCIMResponse(ResponseCodeConstants.CODE_OK, schemaResponseBody, responseHeaders);
     }
-
+    
     /**
      * Builds the SCIM schemas config json representation using the provided schemas.
      *
@@ -140,26 +153,43 @@ public class SchemaResourceManager extends AbstractResourceManager {
      * @return SCIM schemas config json representation.
      * @throws CharonException
      */
-    private JSONArray buildSchemasResponseBody(Map<String, List<Attribute>> schemas) throws CharonException {
-
-        JSONArray rootObject = new JSONArray();
-        if (schemas.get(CORE_SCHEMA_URI) != null) {
-            JSONObject coreSchemaObject = buildCoreSchema(schemas.get(CORE_SCHEMA_URI));
-            rootObject.put(coreSchemaObject);
+    private JSONObject buildSchemasResponseBody(Map<String, SCIMResourceTypeSchema> schemas) throws CharonException, NotFoundException {
+        
+        JSONObject rootObject = new JSONObject();
+        
+        if (schemas.size() > 1) {
+          rootObject.put("schemas", new JSONArray().put(SCIMConstants.LISTED_RESOURCE_CORE_SCHEMA_URI)); 
         }
+        
+        JSONArray schemaObject = new JSONArray();
+        
         if (schemas.get(USER_CORE_SCHEMA_URI) != null) {
-            JSONObject userSchemaObject = buildUserSchema(schemas.get(USER_CORE_SCHEMA_URI));
-            rootObject.put(userSchemaObject);
+          schemaObject.put(buildUserSchema(schemas.get(USER_CORE_SCHEMA_URI)));
         }
         if (schemas.get(ENTERPRISE_USER_SCHEMA_URI) != null) {
-            JSONObject enterpriseUserSchemaObject = buildEnterpriseUserSchema(schemas.get(ENTERPRISE_USER_SCHEMA_URI));
-            rootObject.put(enterpriseUserSchemaObject);
+          schemaObject.put(buildEnterpriseUserSchema(ENTERPRISE_USER_SCHEMA_URI, schemas.get(ENTERPRISE_USER_SCHEMA_URI)));
         }
-        String customSchemaURI = SCIMCustomSchemaExtensionBuilder.getInstance().getURI();
-        if (StringUtils.isNotBlank(customSchemaURI) && schemas.get(customSchemaURI) != null) {
-            JSONObject customUserSchemaObject = buildCustomUserSchema(customSchemaURI, schemas.get(customSchemaURI));
-            rootObject.put(customUserSchemaObject);
+        String customUserSchemaURI = SCIMCustomSchemaExtensionBuilder.getInstance().getURI();
+        if (StringUtils.isNotBlank(customUserSchemaURI) && schemas.get(customUserSchemaURI) != null) {
+          schemaObject.put(buildCustomUserSchema(schemas.get(customUserSchemaURI)));
         }
+        if (schemas.get(GROUP_CORE_SCHEMA_URI) != null) {
+          schemaObject.put(buildGroupSchema(schemas.get(GROUP_CORE_SCHEMA_URI)));
+        }
+        String customGroupSchemaURI = SCIMGroupSchemaExtensionBuilder.getInstance().getExtensionSchema().getURI();
+        if (StringUtils.isNotBlank(customGroupSchemaURI) && schemas.get(customGroupSchemaURI) != null) {
+          schemaObject.put(buildCustomGroupSchema(schemas.get(customGroupSchemaURI)));
+        }
+        
+        if (schemas.size() > 1) {
+          rootObject.put(ListedResourceSchemaConstants.TOTAL_RESULTS, schemas.size());
+          rootObject.put(ListedResourceSchemaConstants.ITEMS_PER_PAGE, schemas.size());
+          rootObject.put(ListedResourceSchemaConstants.START_INDEX, 1);
+          rootObject.put(ListedResourceSchemaConstants.RESOURCES, schemaObject);
+        } else {
+          rootObject = schemaObject.getJSONObject(0);
+        }
+        
         return rootObject;
     }
 
@@ -170,99 +200,193 @@ public class SchemaResourceManager extends AbstractResourceManager {
      * @return JSON object of enterprise user schema
      * @throws CharonException
      */
-    private JSONObject buildEnterpriseUserSchema(List<Attribute> enterpriseUserSchemaList) throws CharonException {
+    private JSONObject buildEnterpriseUserSchema(String customSchemaURI, SCIMResourceTypeSchema schema) throws CharonException, NotFoundException {
 
         try {
             JSONEncoder encoder = getEncoder();
 
-            JSONObject enterpriseUserSchemaObject = new JSONObject();
-            enterpriseUserSchemaObject.put(SCIMConstants.CommonSchemaConstants.ID, ENTERPRISE_USER_SCHEMA_URI);
-            enterpriseUserSchemaObject.put(SCIMConstants.EnterpriseUserSchemaConstants.NAME, ENTERPRISE_USER);
-            enterpriseUserSchemaObject.put(SCIMConstants.
-                    EnterpriseUserSchemaConstants.DESCRIPTION, ENTERPRISE_USER_DESC);
+            JSONObject schemaObject = new JSONObject();
+            schemaObject.put(SCIMConstants.CommonSchemaConstants.ID, ENTERPRISE_USER_SCHEMA_URI);
+            schemaObject.put(SCIMConstants.EnterpriseUserSchemaConstants.NAME, ENTERPRISE_USER);
+            schemaObject.put(SCIMConstants.
+                    EnterpriseUserSchemaConstants.DESCRIPTION, "Enterprise User Schema");
 
-            JSONArray enterpriseUserAttributeArray = buildSchemaAttributeArray(enterpriseUserSchemaList, encoder);
-            enterpriseUserSchemaObject.put(ATTRIBUTES, enterpriseUserAttributeArray);
-            return enterpriseUserSchemaObject;
+            JSONArray schemasArray = new JSONArray();
+            schemasArray.put("urn:ietf:params:scim:schemas:core:2.0:Schema");
+            schemaObject.put(SCIMConstants.CommonSchemaConstants.SCHEMAS, schemasArray);
+            
+            JSONObject metaSchemaObject = new JSONObject();
+            metaSchemaObject.put(RESOURCE_TYPE, "Schema");
+            metaSchemaObject.put(LOCATION, getResourceEndpointURL(SCIMConstants.SCHEMAS_ENDPOINT) + "/" + ENTERPRISE_USER_SCHEMA_URI);
+            schemaObject.put(META, metaSchemaObject);
+
+            ArrayList<AttributeSchema> attributeSchemaList = schema.getAttributesList();
+            ArrayList<AttributeSchema> attributeSubSchemaList = null;
+            
+            for (AttributeSchema attributeSchema : attributeSchemaList) {
+              if (attributeSchema.getURI().contains(customSchemaURI)) {
+                attributeSubSchemaList = (ArrayList<AttributeSchema>) attributeSchema.getSubAttributeSchemas();
+              }
+            }
+            
+            JSONArray schemaAttributeArray = buildSchemaAttributesArray(attributeSubSchemaList);
+            schemaObject.put(ATTRIBUTES, schemaAttributeArray);
+            
+            return schemaObject;
         } catch (JSONException e) {
             throw new CharonException("Error while encoding enterprise user schema.", e);
         }
     }
 
-    private JSONObject buildCustomUserSchema(String customSchemaURI, List<Attribute> customUserSchemaList)
-            throws CharonException {
+    private JSONObject buildCustomUserSchema(SCIMResourceTypeSchema schema)
+            throws CharonException, NotFoundException {
 
         try {
             JSONEncoder encoder = getEncoder();
-            JSONObject customUserSchemaObject = new JSONObject();
-            customUserSchemaObject.put(SCIMConstants.CommonSchemaConstants.ID, customSchemaURI);
-            customUserSchemaObject.put(SCIMConstants.CustomUserSchemaConstants.NAME, CUSTOM_USER);
-            customUserSchemaObject.put(SCIMConstants.CustomUserSchemaConstants.DESCRIPTION, CUSTOM_USER_DESC);
-            // Builds attribute array object.
-            JSONArray customUserAttributeArray = buildSchemaAttributeArray(customUserSchemaList, encoder);
-            customUserSchemaObject.put(ATTRIBUTES, customUserAttributeArray);
-            return customUserSchemaObject;
+            JSONObject schemaObject = new JSONObject();
+            schemaObject.put(SCIMConstants.CommonSchemaConstants.ID, customUserSchemaURI);
+            schemaObject.put(SCIMConstants.CustomUserSchemaConstants.NAME, CUSTOM_USER);
+            schemaObject.put(SCIMConstants.CustomUserSchemaConstants.DESCRIPTION, "Custom User Schema");
+
+            JSONArray schemasArray = new JSONArray();
+            schemasArray.put("urn:ietf:params:scim:schemas:core:2.0:Schema");
+            schemaObject.put(SCIMConstants.CommonSchemaConstants.SCHEMAS, schemasArray);
+            
+            JSONObject metaSchemaObject = new JSONObject();
+            metaSchemaObject.put(RESOURCE_TYPE, "Schema");
+            metaSchemaObject.put(LOCATION, getResourceEndpointURL(SCIMConstants.SCHEMAS_ENDPOINT) + "/" + customUserSchemaURI);
+            schemaObject.put(META, metaSchemaObject);
+
+            ArrayList<AttributeSchema> attributeSchemaList = schema.getAttributesList();
+            ArrayList<AttributeSchema> attributeSubSchemaList = null;
+            
+            for (AttributeSchema attributeSchema : attributeSchemaList) {
+              if (attributeSchema.getURI().contains(customUserSchemaURI)) {
+                attributeSubSchemaList = (ArrayList<AttributeSchema>) attributeSchema.getSubAttributeSchemas();
+              }
+            }
+            
+            JSONArray schemaAttributeArray = buildSchemaAttributesArray(attributeSubSchemaList);
+            schemaObject.put(ATTRIBUTES, schemaAttributeArray);
+            
+            return schemaObject;
         } catch (JSONException e) {
             throw new CharonException("Error while encoding custom user schema.", e);
         }
     }
 
-    private JSONObject buildUserSchema(List<Attribute> userSchemaAttributeList) throws CharonException {
+    private JSONObject buildUserSchema(SCIMResourceTypeSchema schema) throws CharonException, NotFoundException {
 
         try {
             JSONEncoder encoder = getEncoder();
 
-            JSONObject userSchemaObject = new JSONObject();
-            userSchemaObject.put(SCIMConstants.CommonSchemaConstants.ID, USER_CORE_SCHEMA_URI);
-            userSchemaObject.put(SCIMConstants.UserSchemaConstants.NAME, USER);
-            userSchemaObject.put(SCIMConstants.ResourceTypeSchemaConstants.DESCRIPTION, USER_ACCOUNT);
+            JSONObject schemaObject = new JSONObject();
+            schemaObject.put(SCIMConstants.CommonSchemaConstants.ID, USER_CORE_SCHEMA_URI);
+            schemaObject.put(SCIMConstants.UserSchemaConstants.NAME, USER);
+            schemaObject.put(SCIMConstants.ResourceTypeSchemaConstants.DESCRIPTION, "User Schema");
+            
+            JSONArray schemasArray = new JSONArray();
+            schemasArray.put("urn:ietf:params:scim:schemas:core:2.0:Schema");
+            schemaObject.put(SCIMConstants.CommonSchemaConstants.SCHEMAS, schemasArray);
 
-            JSONArray userSchemaAttributeArray = buildSchemaAttributeArray(userSchemaAttributeList, encoder);
-            userSchemaObject.put(ATTRIBUTES, userSchemaAttributeArray);
-            return userSchemaObject;
+            JSONObject metaSchemaObject = new JSONObject();
+            metaSchemaObject.put(RESOURCE_TYPE, "Schema");
+            metaSchemaObject.put(LOCATION, getResourceEndpointURL(SCIMConstants.SCHEMAS_ENDPOINT) + "/" + USER_CORE_SCHEMA_URI);
+            schemaObject.put(META, metaSchemaObject);
+
+            ArrayList<AttributeSchema> attributeSchemaList = schema.getAttributesList();
+            ArrayList<AttributeSchema> attributeSubSchemaList = new ArrayList<AttributeSchema>();
+            
+            for (AttributeSchema attributeSchema : attributeSchemaList) {
+              if (!attributeSchema.getURI().contains(ENTERPRISE_USER_SCHEMA_URI) && 
+                  !(StringUtils.isNotBlank(customUserSchemaURI) && attributeSchema.getURI().contains(customUserSchemaURI))) {
+                attributeSubSchemaList.add(attributeSchema);
+              }
+            }
+            
+            JSONArray schemaAttributeArray = buildSchemaAttributesArray(attributeSubSchemaList);
+            schemaObject.put(ATTRIBUTES, schemaAttributeArray);
+            
+            return schemaObject;
         } catch (JSONException e) {
             throw new CharonException("Error while encoding user schema", e);
         }
     }
 
-    private JSONObject buildCoreSchema(List<Attribute> coreSchemaAttributeList) throws CharonException {
+    private JSONObject buildGroupSchema(SCIMResourceTypeSchema schema) throws CharonException, NotFoundException {
 
         try {
             JSONEncoder encoder = getEncoder();
 
-            JSONObject coreSchemaObject = new JSONObject();
-            coreSchemaObject.put(SCIMConstants.CommonSchemaConstants.ID, CORE_SCHEMA_URI);
-            coreSchemaObject.put(SCIMConstants.UserSchemaConstants.NAME, CORE);
-            coreSchemaObject.put(SCIMConstants.ResourceTypeSchemaConstants.DESCRIPTION, CORE);
+            JSONObject schemaObject = new JSONObject();
+            schemaObject.put(SCIMConstants.CommonSchemaConstants.ID, GROUP_CORE_SCHEMA_URI);
+            schemaObject.put(SCIMConstants.UserSchemaConstants.NAME, GROUP);
+            schemaObject.put(SCIMConstants.ResourceTypeSchemaConstants.DESCRIPTION, "Group Schema");
 
-            JSONArray coreSchemaAttributeArray = buildSchemaAttributeArray(coreSchemaAttributeList, encoder);
-            coreSchemaObject.put(ATTRIBUTES, coreSchemaAttributeArray);
-            return coreSchemaObject;
+            JSONArray schemasArray = new JSONArray();
+            schemasArray.put("urn:ietf:params:scim:schemas:core:2.0:Schema");
+            schemaObject.put(SCIMConstants.CommonSchemaConstants.SCHEMAS, schemasArray);
+            
+            JSONObject metaSchemaObject = new JSONObject();
+            metaSchemaObject.put(RESOURCE_TYPE, "Schema");
+            metaSchemaObject.put(LOCATION, getResourceEndpointURL(SCIMConstants.SCHEMAS_ENDPOINT) + "/" + GROUP_CORE_SCHEMA_URI);
+            schemaObject.put(META, metaSchemaObject);
+
+            ArrayList<AttributeSchema> attributeSchemaList = schema.getAttributesList();    
+            ArrayList<AttributeSchema> attributeSubSchemaList = new ArrayList<AttributeSchema>();
+            
+            for (AttributeSchema attributeSchema : attributeSchemaList) {
+              if (!(StringUtils.isNotBlank(customGroupSchemaURI) && attributeSchema.getURI().contains(customGroupSchemaURI))) {
+                attributeSubSchemaList.add(attributeSchema);
+              }
+            }
+            
+            JSONArray schemaAttributeArray = buildSchemaAttributesArray(attributeSubSchemaList);
+            schemaObject.put(ATTRIBUTES, schemaAttributeArray);
+            
+            return schemaObject;
+            
         } catch (JSONException e) {
-            throw new CharonException("Error while encoding core schema.", e);
+            throw new CharonException("Error while encoding group schema", e);
         }
     }
 
-    private JSONArray buildSchemaAttributeArray(List<Attribute> schemaAttributeList, JSONEncoder encoder)
-            throws JSONException {
+    private JSONObject buildCustomGroupSchema(SCIMResourceTypeSchema schema)
+            throws CharonException, NotFoundException {
 
-        JSONArray schemaAttributeArray = new JSONArray();
+        try {
+            JSONEncoder encoder = getEncoder();
 
-        for (Attribute schemaAttribute : schemaAttributeList) {
+            JSONObject schemaObject = new JSONObject();
+            schemaObject.put(SCIMConstants.CommonSchemaConstants.ID, customGroupSchemaURI);
+            schemaObject.put(SCIMConstants.CustomUserSchemaConstants.NAME, "VodafoneGroup");
+            schemaObject.put(SCIMConstants.ResourceTypeSchemaConstants.DESCRIPTION, "Vodafone Group Extension Schema");
 
-            JSONObject schemaJSONAttribute;
-            if (schemaAttribute instanceof ComplexAttribute) {
-                schemaJSONAttribute = encoder.encodeComplexAttributeSchema((ComplexAttribute) schemaAttribute);
-            } else if (schemaAttribute instanceof SimpleAttribute) {
-                schemaJSONAttribute = encoder.encodeSimpleAttributeSchema((SimpleAttribute) schemaAttribute);
-            } else {
-                schemaJSONAttribute = encoder.encodeBasicAttributeSchema(schemaAttribute);
+            JSONArray schemasArray = new JSONArray();
+            schemasArray.put("urn:ietf:params:scim:schemas:core:2.0:Schema");
+            schemaObject.put(SCIMConstants.CommonSchemaConstants.SCHEMAS, schemasArray);
+            
+            JSONObject metaSchemaObject = new JSONObject();
+            metaSchemaObject.put(RESOURCE_TYPE, "Schema");
+            metaSchemaObject.put(LOCATION, getResourceEndpointURL(SCIMConstants.SCHEMAS_ENDPOINT) + "/" + customGroupSchemaURI);
+            schemaObject.put(META, metaSchemaObject);
+
+            ArrayList<AttributeSchema> attributeSchemaList = schema.getAttributesList();
+            ArrayList<AttributeSchema> attributeSubSchemaList = null;
+            
+            for (AttributeSchema attributeSchema : attributeSchemaList) {
+              if (attributeSchema.getURI().contains(customGroupSchemaURI)) {
+                attributeSubSchemaList = (ArrayList<AttributeSchema>) attributeSchema.getSubAttributeSchemas();
+              }
             }
-
-            schemaAttributeArray.put(schemaJSONAttribute);
+            
+            JSONArray schemaAttributeArray = buildSchemaAttributesArray(attributeSubSchemaList);
+            schemaObject.put(ATTRIBUTES, schemaAttributeArray);
+            
+            return schemaObject;
+        } catch (JSONException e) {
+            throw new CharonException("Error while encoding custom group schema.", e);
         }
-
-        return schemaAttributeArray;
     }
 
     private Map<String, String> getResponseHeaders() throws NotFoundException {
@@ -273,6 +397,82 @@ public class SchemaResourceManager extends AbstractResourceManager {
         responseHeaders.put(SCIMConstants.LOCATION_HEADER, getResourceEndpointURL(SCIMConstants.SCHEMAS_ENDPOINT));
         return responseHeaders;
     }
+
+        /*
+     *  Build the user schema json representation.
+     * @return
+     */
+    public JSONArray buildSchemaAttributesArray(ArrayList<AttributeSchema> schemaAttributeList) throws JSONException {
+      
+        JSONObject schemaObject = new JSONObject();
+        
+        JSONArray schemaAttributes = new JSONArray();
+                
+        for (AttributeSchema schemaAttribute : schemaAttributeList) {
+            
+            JSONObject schemaJSONAttribute = new JSONObject();
+            if (schemaAttribute.getType() == SCIMDefinitions.DataType.COMPLEX) {
+              schemaJSONAttribute = encodeComplexAttributeSchema(schemaAttribute);
+            } else {
+              schemaJSONAttribute = encodeBasicAttributeSchema(schemaAttribute);
+            }
+            schemaAttributes.put(schemaJSONAttribute);
+        }
+        
+        return schemaAttributes;
+    }
+    
+        /**
+     * Encode the attribute schema and return the json object.
+     *
+     * @param attribute
+     * @return json object of the attribute schema.
+     * @throws JSONException
+     */
+    public JSONObject encodeBasicAttributeSchema(AttributeSchema attribute) throws JSONException {
+
+        JSONObject attributeSchema = new JSONObject();
+        attributeSchema.put(org.wso2.charon3.core.schema.SCIMConstants.UserSchemaConstants.NAME, attribute.getName());
+        attributeSchema.put(org.wso2.charon3.core.schema.SCIMConstants.CommonSchemaConstants.TYPE, attribute.getType());
+        attributeSchema.put(org.wso2.charon3.core.config.SCIMConfigConstants.MULTIVALUED, attribute.getMultiValued());
+        attributeSchema.put(org.wso2.charon3.core.config.SCIMConfigConstants.DESCRIPTION, attribute.getDescription());
+        attributeSchema.put(org.wso2.charon3.core.config.SCIMConfigConstants.REQUIRED, attribute.getRequired());
+        attributeSchema.put(org.wso2.charon3.core.config.SCIMConfigConstants.CASE_EXACT, attribute.getCaseExact());
+        attributeSchema.put(org.wso2.charon3.core.config.SCIMConfigConstants.MUTABILITY, attribute.getMutability());
+        attributeSchema.put(org.wso2.charon3.core.config.SCIMConfigConstants.RETURNED, attribute.getReturned());
+        attributeSchema.put(org.wso2.charon3.core.config.SCIMConfigConstants.UNIQUENESS, attribute.getUniqueness());
+
+        return attributeSchema;
+    }
+
+     /**
+-     * Encode the multiValued attribute schema and return the json object.
++     * Encode the complex attribute schema and return the json object.
+      *
+      * @param complexAttribute
+      * @return json object of the complex attribute schema.
+      * @throws JSONException
+      */
+    public JSONObject encodeComplexAttributeSchema(AttributeSchema complexAttribute) throws JSONException {
+ 
+
+        JSONObject complexAttributeSchema = encodeBasicAttributeSchema(complexAttribute);
+        List<AttributeSchema> subAttributesSchemaList = complexAttribute.getSubAttributeSchemas();
+        
+        if (subAttributesSchemaList != null) {
+          JSONArray subAttributesSchemaArray = new JSONArray();
+
+          for (AttributeSchema subAttributeSchema : subAttributesSchemaList) {
+            JSONObject subAttributesSchemaObject = encodeBasicAttributeSchema(subAttributeSchema);
+            subAttributesSchemaArray.put(subAttributesSchemaObject);
+          }
+ 
+          complexAttributeSchema.put(org.wso2.charon3.core.config.SCIMConfigConstants.SUB_ATTRIBUTES, subAttributesSchemaArray);
+         }
+       
+       return complexAttributeSchema;
+     }
+
 
     @Override
     public SCIMResponse create(String scimObjectString, UserManager userManager, String attributes, String

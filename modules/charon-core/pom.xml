@@ -90,11 +90,19 @@
                 <artifactId>findbugs-maven-plugin</artifactId>
                 <configuration>
                     <excludeFilterFile>findbugs-exclude.xml</excludeFilterFile>
+                    <skip>true</skip>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.felix</groupId>
