@@ -675,11 +675,12 @@ public class GroupResourceManager extends AbstractResourceManager {
         for (PatchOperation patchOperation : patchOperations) {
             String operation = patchOperation.getOperation();
             String path = patchOperation.getPath();
+
             if (!(patchOperation.getValues() instanceof String)) {
-                JSONObject valuesJson = (JSONObject) patchOperation.getValues();
+                Object valuesJson = patchOperation.getValues();
                 if (operation.equals(SCIMConstants.OperationalConstants.REPLACE) &&
                         ((path != null && path.equals(SCIMConstants.GroupSchemaConstants.MEMBERS)) ||
-                                (valuesJson != null && valuesJson.has(SCIMConstants.GroupSchemaConstants.MEMBERS)))) {
+                         (valuesJson != null && valuesJson instanceof JSONObject && ((JSONObject)valuesJson).has(SCIMConstants.GroupSchemaConstants.MEMBERS)))) {
                     return true;
                 } else if (operation.equals(SCIMConstants.OperationalConstants.REMOVE) && path != null
                         && path.equals(SCIMConstants.GroupSchemaConstants.MEMBERS)) {
@@ -835,10 +836,9 @@ public class GroupResourceManager extends AbstractResourceManager {
                     patchOperation.setValues(attributePrefixedJson);
                 } else if (patchOperation.getPath().equals(SCIMConstants.GroupSchemaConstants.MEMBERS) &&
                         patchOperation.getValues() != null) {
-                    JSONObject valuesPropertyJson = (JSONObject) patchOperation.getValues();
                     JSONObject attributePrefixedJson = new JSONObject();
 
-                    attributePrefixedJson.put(SCIMConstants.GroupSchemaConstants.MEMBERS, valuesPropertyJson);
+                    attributePrefixedJson.put(SCIMConstants.GroupSchemaConstants.MEMBERS, patchOperation.getValues());
                     patchOperation.setValues(attributePrefixedJson);
                 } else {
                     throw new BadRequestException("Not a valid attribute.", ResponseCodeConstants.INVALID_SYNTAX);
