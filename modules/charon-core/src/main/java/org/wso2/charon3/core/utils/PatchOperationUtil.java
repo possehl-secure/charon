@@ -54,6 +54,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import org.wso2.charon3.core.exceptions.FormatNotSupportedException;
 
 /**
  * This provides the methods on the PATCH operation of any resource type.
@@ -96,14 +97,12 @@ public class PatchOperationUtil {
 
         if (parts.length != 1) {
             //currently we only support simple filters here.
-            String[] filterParts = parts[1].split(" ");
-
-            ExpressionNode expressionNode = new ExpressionNode();
-            expressionNode.setAttributeValue(filterParts[0]);
-            expressionNode.setOperation(filterParts[1]);
-            // According to the specification filter attribute value specified with quotation mark, so we need to
-            // remove it if exists.
-            expressionNode.setValue(filterParts[2].replaceAll("^\"|\"$", ""));
+            ExpressionNode expressionNode;
+            try {
+                expressionNode = new ExpressionNode(parts[1]);
+            } catch (FormatNotSupportedException ex) {
+                throw new NotImplementedException(ex.getMessage());
+            }
 
             if (expressionNode.getOperation().equalsIgnoreCase((SCIMConstants.OperationalConstants.EQ).trim())) {
 
@@ -2725,14 +2724,12 @@ public class PatchOperationUtil {
 
         if (parts.length != 1) {
             //currently we only support simple filters here.
-            String[] filterParts = parts[1].split(" ");
-
-            ExpressionNode expressionNode = new ExpressionNode();
-            expressionNode.setAttributeValue(filterParts[0]);
-            expressionNode.setOperation(filterParts[1]);
-            // According to the specification filter attribute value specified with quotation mark, so we need to
-            // remove it if exists.
-            expressionNode.setValue(filterParts[2].replaceAll("^\"|\"$", ""));
+            ExpressionNode expressionNode;
+            try {
+                expressionNode = new ExpressionNode(parts[1]);
+            } catch (FormatNotSupportedException ex) {
+                throw new NotImplementedException(ex.getMessage());
+            }
 
             if (expressionNode.getOperation().equalsIgnoreCase((SCIMConstants.OperationalConstants.EQ).trim())) {
                 if (parts.length == 3) {

@@ -15,6 +15,10 @@
  */
 package org.wso2.charon3.core.utils.codeutils;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.wso2.charon3.core.exceptions.FormatNotSupportedException;
+
 /**
  * This is the node representation of the AST which is used in the filtering operations.
  */
@@ -28,11 +32,16 @@ public class ExpressionNode extends Node {
 
     }
 
-    public ExpressionNode(String filter) {
-        String[] valueList = filter.split(" ");
-        this.attributeValue = valueList[1];
-        this.operation = valueList[2];
-        this.value = valueList[3];
+    public ExpressionNode(String filter) throws FormatNotSupportedException {
+        String regex = "([^ ]+) ([^ ]+)(?: \"?([^\"]+)\"?)?";
+        Matcher m = Pattern.compile(regex).matcher(filter);
+        if (m.matches()) {
+          this.attributeValue = m.group(1);
+          this.operation = m.group(2);
+          this.value = m.group(3);
+        } else {
+          throw new FormatNotSupportedException("invalid filter: " + filter);
+        }
     }
 
     public String getOperation() {
