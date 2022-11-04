@@ -509,7 +509,7 @@ public abstract class AbstractValidator {
                         subAttributeTemporyList.add(subAttribute);
                     }
                     for (Attribute subAttribute : subAttributeTemporyList) {
-                        if (subAttribute.getType().equals(SCIMDefinitions.DataType.COMPLEX)) {
+                        if (SCIMDefinitions.DataType.COMPLEX.equals(subAttribute.getType())) {
                             //this applicable for extension schema only
                             if (subAttribute.getMultiValued()) {
 
