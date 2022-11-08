@@ -3322,8 +3322,20 @@ public class PatchOperationUtil {
                             }
                         }
                         if (!isValueFound) {
-                            throw new BadRequestException("No matching filter value found.",
-                                    ResponseCodeConstants.NO_TARGET);
+                            // Path addressed a multi-value attribute containing complex values, but we
+                            // didn't find the particular record matching the valuePath.
+                            // In this case, we shall simply add the given record!
+                            
+                            if (log.isDebugEnabled()) {
+                              log.debug(String.format(
+                                 "no records found in %s for {%s %s %s}",
+                                 attribute.getName(), 
+                                 expressionNode.getAttributeValue(),
+                                 expressionNode.getOperation(),
+                                 expressionNode.getValue()));
+                            }
+                            // throw new BadRequestException("No matching filter value found.",
+                            //         ResponseCodeConstants.NO_TARGET);
                         }
                         AttributeSchema attributeSchema = SchemaUtil.getAttributeSchema(attributeParts[0], schema);
                         subValues.add(decoder.buildComplexAttribute(attributeSchema,
