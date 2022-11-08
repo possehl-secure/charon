@@ -175,14 +175,15 @@ public class PatchOperationUtil {
         String attributeNameString = attributeURIParts[attributeURIParts.length - 1];
         String[] attributeNames = attributeNameString.split("\\.");
 
-        if (attributeURIParts.length > 1) {
+        if (attributeURIParts.length > 1
+                && !SCIMConstants.USER_CORE_SCHEMA_URI.equals(extensionURI.substring(1))) {
             tempAttributeNames.add(extensionURI.substring(1));
         }
 
         for (int i = 0; i < attributeNames.length; i++) {
             tempAttributeNames.add(attributeNames[i]);
         }
-
+        
         return tempAttributeNames.toArray(attributeNames);
     }
 
@@ -584,7 +585,7 @@ public class PatchOperationUtil {
         String[] attributeParts = getAttributeParts(parts[0]);
         if (attributeParts.length == 1) {
 
-            Attribute attribute = oldResource.getAttribute(parts[0]);
+            Attribute attribute = oldResource.getAttribute(attributeParts[0]);
 
             if (attribute != null) {
                 if (attribute.getMutability().equals(SCIMDefinitions.Mutability.READ_ONLY) ||
@@ -1805,7 +1806,7 @@ public class PatchOperationUtil {
             throws BadRequestException, CharonException, InternalErrorException {
 
         String[] attributeParts = getAttributeParts(parts[0]);
-
+        
         if (attributeParts.length == 1) {
 
             doPatchReplaceOnPathWithoutFiltersForLevelOne(oldResource, schema, decoder, operation, attributeParts);
