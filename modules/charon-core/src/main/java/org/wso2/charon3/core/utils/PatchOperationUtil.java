@@ -1853,7 +1853,8 @@ public class PatchOperationUtil {
                         throw new BadRequestException("Can not replace a immutable attribute or a read-only attribute",
                                 ResponseCodeConstants.MUTABILITY);
                     } else {
-                        ((SimpleAttribute) attribute).setValue(operation.getValues().toString());
+                        Object obj = operation.getValues();
+                        ((SimpleAttribute) attribute).setValue(obj==JSONObject.NULL ? null : obj.toString());
                     }
                 } else {
                     if (attribute.getMutability().equals(SCIMDefinitions.Mutability.READ_ONLY) ||
