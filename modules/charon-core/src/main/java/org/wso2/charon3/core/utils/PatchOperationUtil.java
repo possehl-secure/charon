@@ -3338,9 +3338,20 @@ public class PatchOperationUtil {
                             //         ResponseCodeConstants.NO_TARGET);
                         }
                         AttributeSchema attributeSchema = SchemaUtil.getAttributeSchema(attributeParts[0], schema);
-                        subValues.add(decoder.buildComplexAttribute(attributeSchema,
-                                (JSONObject) operation.getValues()));
-
+                        Object values = operation.getValues();
+                        if (values instanceof JSONObject) {
+                            subValues.add(decoder.buildComplexAttribute(
+                                    attributeSchema, (JSONObject) values));
+                        } else if (values instanceof JSONArray) {
+                            JSONArray valArr = (JSONArray) values;
+                            for (int i = 0; i < valArr.length(); i++) {
+                              subValues.add(decoder.buildComplexAttribute(
+                                      attributeSchema, valArr.getJSONObject(i)));
+                            }
+                        } else {
+                            throw new BadRequestException("Invalid value type "+ values.getClass().getName(),
+                                     ResponseCodeConstants.INVALID_VALUE);
+                        }
                     }
                 } else {
                     //this is complex attribute which has multi valued primitive sub attribute.
