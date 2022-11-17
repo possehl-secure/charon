@@ -1854,7 +1854,7 @@ public class PatchOperationUtil {
                                 ResponseCodeConstants.MUTABILITY);
                     } else {
                         Object obj = operation.getValues();
-                        ((SimpleAttribute) attribute).setValue(obj==JSONObject.NULL ? null : obj.toString());
+                        ((SimpleAttribute) attribute).setValue(obj == JSONObject.NULL ? null : (String) obj);
                     }
                 } else {
                     if (attribute.getMutability().equals(SCIMDefinitions.Mutability.READ_ONLY) ||
