@@ -788,7 +788,7 @@ public class GroupResourceManagerTest {
                 -> AbstractResourceManager.getResourceEndpointURL(SCIMConstants.USER_ENDPOINT))
                 .thenReturn(SCIM2_GROUP_ENDPOINT);
         Mockito.when(userManager.getGroup(anyString(), anyMap())).thenReturn(groupOld);
-        Mockito.when(userManager.patchGroup(anyString(), anyString(), anyMap(), anyMap())).thenReturn(groupNew);
+        Mockito.when(userManager.updateGroup(any(Group.class), any(Group.class), anyMap())).thenReturn(groupNew);
         SCIMResponse scimResponse = groupResourceManager.updateWithPATCH(existingId, patchRequest,
                 userManager, attributes, excludeAttributes);
         Assert.assertEquals(scimResponse.getResponseStatus(), ResponseCodeConstants.CODE_OK);
@@ -820,7 +820,7 @@ public class GroupResourceManagerTest {
                 -> AbstractResourceManager.getResourceEndpointURL(SCIMConstants.USER_ENDPOINT))
                 .thenReturn(SCIM2_GROUP_ENDPOINT);
         Mockito.when(userManager.getGroup(anyString(), anyMap())).thenReturn(groupOld);
-        Mockito.when(userManager.patchGroup(anyString(), anyString(), anyMap(), anyMap())).thenReturn(groupNew);
+        Mockito.when(userManager.updateGroup(any(Group.class), any(Group.class), anyMap())).thenReturn(groupNew);
         SCIMResponse scimResponse = groupResourceManager.updateWithPATCH(existingId, patchRequest, userManager);
         Assert.assertEquals(scimResponse.getResponseStatus(), ResponseCodeConstants.CODE_NO_CONTENT);
     }

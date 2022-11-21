@@ -759,7 +759,6 @@ public class JSONDecoder {
                 JSONObject operation = (JSONObject) operationJsonList.get(count);
                 PatchOperation patchOperation = new PatchOperation();
                 String op = (String) operation.opt(SCIMConstants.OperationalConstants.OP);
-                patchOperation.setExecutionOrder(count + 1);
                 if (op == null) {
                     throw new BadRequestException("Operation can not be null.", ResponseCodeConstants
                             .INVALID_SYNTAX);
