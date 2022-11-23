@@ -51,9 +51,11 @@ import org.wso2.charon3.core.utils.codeutils.PatchOperation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import org.wso2.charon3.core.exceptions.FormatNotSupportedException;
 
 /**
@@ -919,7 +921,8 @@ public class PatchOperationUtil {
                     MultiValuedAttribute newMultiValuedAttribute = decoder
                             .buildComplexMultiValuedAttribute(attributeSchema, jsonArray);
                     for (Attribute newAttribute : newMultiValuedAttribute.getAttributeValues()) {
-                        ((MultiValuedAttribute) attribute).setAttributeValue(newAttribute);
+                        // merge value into existing complex-list
+                        mergeMultiValueComplexAttribute((ComplexAttribute) newAttribute, (MultiValuedAttribute) attribute);
                     }
                 } else {
                     throw new BadRequestException(
@@ -3634,5 +3637,54 @@ public class PatchOperationUtil {
         } catch (CharonException e) {
             throw new CharonException("Error in performing the replace operation", e);
         }
+    }
+
+    // merge single complex-value into existing complex-value list
+    private static void mergeMultiValueComplexAttribute(
+            ComplexAttribute newAttribute,
+            MultiValuedAttribute existingMultiValueAttribute) throws CharonException {
+
+         // remove any matching attribute(s)
+        for (Iterator<Attribute> iterator
+                = existingMultiValueAttribute.getAttributeValues().iterator();
+                iterator.hasNext();) {
+            Attribute subValue = iterator.next();
+            if (!(subValue instanceof ComplexAttribute)) {
+                throw new CharonException("encountered invalid attribute type for " + subValue);
+            }
+            if (matchesMultiValueComplexAttribute((ComplexAttribute) subValue, newAttribute)) {
+                iterator.remove();
+            }
+        }
+
+        // add new complex-attribute
+        existingMultiValueAttribute.setAttributeValue(newAttribute);
+    }
+    
+    
+    // decide whether two complex attributes match
+    private static boolean matchesMultiValueComplexAttribute(
+            ComplexAttribute oldAttribute, ComplexAttribute newAttribute) throws CharonException {
+        
+        // According to RFC7643 sec 2.4, complex-attributes used as elements of 
+        // an multi-valued attribute must adhere to a well-defined set of
+        // sub-attributes. Among them are "type" and "value", which identify
+        // a complex attribute uniqly.
+        // Thus, in the multi-value list context, any other complex attribute
+        // with the same value and type is "matching".
+        
+        boolean matches = true;
+        for (String attrName
+                : Arrays.asList(SCIMConstants.CommonSchemaConstants.VALUE,
+                        SCIMConstants.CommonSchemaConstants.TYPE)) {
+            if (oldAttribute.isSubAttributeExist(attrName)
+                    && newAttribute.isSubAttributeExist(attrName)
+                    && !((SimpleAttribute) oldAttribute.getSubAttribute(attrName)).getValue().equals(
+                    ((SimpleAttribute) newAttribute.getSubAttribute(attrName)).getValue())) {
+                return false;
+            }
+        }
+        
+        return matches;
     }
 }
